@@ -47,6 +47,8 @@ public class PlayerManager : MonoBehaviour
 
     public static event Action OnPlayerMoveComplete; // 이동 완료 이벤트
 
+    private Coroutine firstDeathCoroutine;
+
     private void Awake()
     {
         // 싱글톤 인스턴스 설정
@@ -66,6 +68,7 @@ public class PlayerManager : MonoBehaviour
         playerHP = maxHealth;
         animator = GetComponent<Animator>();
         targetPosition = transform.position;
+        firstDeathCoroutine = null;
 
         if (respawnPoint == Vector3.zero)
             respawnPoint = transform.position; // 초기 리스폰 위치 설정
@@ -178,10 +181,10 @@ public class PlayerManager : MonoBehaviour
         Debug.Log("플레이어가 사망했습니다.");
         if (isFirstDeath)
         {
-          
-            StartCoroutine(ShowDeathImagesAndRespawn());
+
+            firstDeathCoroutine = StartCoroutine(ShowDeathImagesAndRespawn());
         }
-        else
+        else if(firstDeathCoroutine == null)
         {
             HandleDeath();
             Respawn();
@@ -209,17 +212,19 @@ public class PlayerManager : MonoBehaviour
             StartCoroutine(FadeIn(currentImage)); // 페이드인
             Debug.Log("플레이어가 사망했습니다.1111111");
             Debug.Log(deathImages.Length);
-            //yield return new WaitForSeconds(1f - fadeDuration); // 유지 시간
+            yield return new WaitForSeconds(1f - fadeDuration); // 유지 시간
 
-           // StartCoroutine(FadeOut(currentImage)); // 페이드아웃
+            StartCoroutine(FadeOut(currentImage)); // 페이드아웃
             Debug.Log("플레이어가 사망했습니다.2222");
-            //yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(1f);
             Debug.Log("플레이어가 사망했습니다.@@@@@@@@@@@@@@@@");
 
             currentImage.gameObject.SetActive(false); // 비활성화
+            
         }
 
         deathCanvas.gameObject.SetActive(false); // 캔버스 숨기기
+        firstDeathCoroutine = null;
         HandleDeath(); // 사망 처리
 
         yield return new WaitForSeconds(respawnDelay); // 리스폰 대기
